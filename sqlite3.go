@@ -54,6 +54,8 @@ func (d *SQLiteDriver) Open(dsn string) (driver.Conn, error) {
 	var loc *time.Location
 	txlock := "BEGIN"
 	busyTimeout := 5000
+	key:=""
+
 	dsn = strings.TrimPrefix(dsn, `file:///`)
 	pos := strings.IndexRune(dsn, '?')
 	if pos >= 1 {
@@ -97,6 +99,10 @@ func (d *SQLiteDriver) Open(dsn string) (driver.Conn, error) {
 			}
 		}
 
+		if val := params.Get("key"); val != "" {
+			key=val
+		}
+
 		if !strings.HasPrefix(dsn, "file:") {
 			dsn = dsn[:pos]
 		}
@@ -124,5 +130,15 @@ func (d *SQLiteDriver) Open(dsn string) (driver.Conn, error) {
 		}
 	}
 	runtime.SetFinalizer(conn, (*SQLiteConn).Close)
+
+	if len(key)!=0{
+		// pragma key 语句不支持参数化查询
+		key:=strings.Replace(key,`"`,`\"`,-1)
+		_,err:=conn.Exec(`pragma key="` + key + `";`,nil)
+		if err != nil {
+			return nil,fmt.Errorf("pragma key ",err)
+		}
+	}
+
 	return conn, nil
 }
