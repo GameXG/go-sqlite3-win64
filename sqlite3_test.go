@@ -8,19 +8,33 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"fmt"
 )
 
 func init() {
 	DLLPath = filepath.Join(os.Getenv(`GOPATH`), `src`, `github.com/admpub/go-sqlite3-win64`)
 }
 
-func TestOpen(t *testing.T) {
-	f, err := os.Create(`./test.db`)
+func TestOpen(t*testing.T) {
+	testOpen(t, "")
+	testOpen(t, "aaaa")
+}
+
+
+func testOpen(t *testing.T,key string) {
+	path:=`./test.db`
+
+	f, err := os.Create(path)
 	if err != nil {
 		t.Fatal(err)
 	}
 	f.Close()
-	db, err := sql.Open(`sqlite3`, `./test.db`)
+
+	if len(key)!=0{
+		path=fmt.Sprintf("%v?key=%v",path,key)
+	}
+	
+	db, err := sql.Open(`sqlite3`, path)
 	if err != nil {
 		t.Fatal(err)
 	}
